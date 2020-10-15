@@ -1,5 +1,7 @@
 class UsersController < ApplicationController
-    before_action :set_user, only: [:show, :edit, :update]
+    before_action :set_user, only: [:show, :edit, :update, :destroy]
+    before_action :require_user, except: [:show, :index]
+    before_action :require_access, only: [:edit, :update, :destroy]
 
     def new
         @user = User.new
@@ -36,6 +38,13 @@ class UsersController < ApplicationController
         @users = User.paginate(page: params[:page], per_page: 5)        
     end
 
+    def destroy
+        @user.destroy
+        session[:user_id] = nil
+        flash[:notice] = "Account and associated articles have been successfuly deleted"
+        redirect_to root_path
+    end
+
     private
 
     def user_params
@@ -44,6 +53,13 @@ class UsersController < ApplicationController
 
     def set_user
         @user = User.find(params[:id])
+    end
+
+    def require_access
+        if current_user != @user
+            flash[:alert] = "You can only edit or delete your own User"
+            redirect_to @user
+        end
     end
 
 end
